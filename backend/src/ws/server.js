@@ -13,7 +13,15 @@ function createWsServer(httpServer) {
 
   httpServer.on("upgrade", async (request, socket, head) => {
     const parsedUrl = url.parse(request.url, true);
-    const { token, projectId } = parsedUrl.query;
+    let { token, projectId } = parsedUrl.query;
+
+    // Fallback: Read token from access_token cookie if not in query params
+    if (!token && request.headers.cookie) {
+      const match = request.headers.cookie.match(/access_token=([^;]+)/);
+      if (match) {
+        token = match[1];
+      }
+    }
 
     if (!token || !projectId) {
       socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");

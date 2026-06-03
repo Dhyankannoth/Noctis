@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Projects — Noctis</title>
+  <meta name="description" content="View and manage your Noctis collaborative systems design projects." />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="variables.css" />
+  <link rel="stylesheet" href="index.css" />
+  <link rel="stylesheet" href="auth.css" />
+
+  <style>
+    /* Custom styles for projects dashboard */
+    .dashboard-container {
+      max-width: 1000px;
+      margin: 120px auto 60px;
+      padding: 0 24px;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+
+    .dashboard-title {
+      font-size: 32px;
+      font-weight: 300;
+    }
+
+    .dashboard-title span {
+      background: var(--gradient-deep-ocean-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .project-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-cards);
+      padding: 28px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 180px;
+    }
+
+    .project-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .project-card__title {
+      font-size: 20px;
+      font-weight: 400;
+      margin-bottom: 8px;
+      color: var(--color-frost-white);
+    }
+
+    .project-card__desc {
+      font-size: 14px;
+      color: var(--color-whisper-gray);
+      line-height: 1.5;
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+
+    .project-card__footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--color-misty-gray);
+    }
+
+    .project-card__role {
+      background: rgba(160, 224, 171, 0.1);
+      color: rgb(160, 224, 171);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 40px;
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-cards);
+    }
+
+    .empty-state__title {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: var(--color-frost-white);
+    }
+
+    .empty-state__desc {
+      font-size: 14px;
+      color: var(--color-whisper-gray);
+      margin-bottom: 24px;
+    }
+
+    /* Modal dialog style */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 460px;
+      background: rgb(15, 15, 15);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-cards);
+      padding: 40px;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 24px;
+      color: var(--color-whisper-gray);
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 400;
+      margin-bottom: 24px;
+    }
+
+    /* Override navbar profile to look correct in indexing */
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--gradient-deep-ocean-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-midnight-canvas);
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .user-name {
+      font-size: 14px;
+      color: var(--color-frost-white);
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  </style>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar scrolled" id="navbar">
+    <a href="index.html" class="navbar__logo" id="nav-logo">
+      <span>NOCTIS</span>
+    </a>
+
+    <ul class="navbar__links" id="nav-links">
+      <li><a href="index.html#features" class="navbar__link">Features</a></li>
+      <li><a href="index.html#about" class="navbar__link">About</a></li>
+    </ul>
+
+    <div class="navbar__actions" id="nav-actions">
+      <!-- Injected by JS -->
+    </div>
+  </nav>
+
+  <!-- Main Dashboard -->
+  <main class="dashboard-container">
+    <header class="dashboard-header">
+      <h1 class="dashboard-title">Your <span>Workspaces</span></h1>
+      <button class="btn btn--filled" id="create-project-btn">+ Create Workspace</button>
+    </header>
+
+    <!-- Error message display -->
+    <div class="auth-error" id="dashboard-error"></div>
+
+    <!-- Projects Grid -->
+    <section id="projects-list" class="projects-grid">
+      <!-- Loading state -->
+      <div style="grid-column: 1/-1; text-align: center; color: var(--color-whisper-gray); padding: 40px 0;">
+        Fetching workspaces...
+      </div>
+    </section>
+  </main>
+
+  <!-- Create Project Modal -->
+  <div class="modal-overlay" id="create-modal">
+    <div class="modal-card">
+      <button class="modal-close" id="modal-close">&times;</button>
+      <h2 class="modal-title">New Workspace</h2>
+      
+      <form id="create-project-form" novalidate>
+        <div class="form-group">
+          <label for="project-name">Workspace Name</label>
+          <input type="text" id="project-name" name="name" placeholder="e.g. Microservices Architecture" required />
+        </div>
+
+        <div class="form-group">
+          <label for="project-desc">Description (Optional)</label>
+          <input type="text" id="project-desc" name="description" placeholder="Short description of the system layout" />
+        </div>
+
+        <button type="submit" class="auth-submit" id="create-submit" style="margin-top: 16px;">Create & Open</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { sessionManager } from "./session.js";
+
+    const API_BASE = "http://localhost:5000/api";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      // 1. Enforce auth
+      const user = await sessionManager.checkSessionSync();
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+      sessionManager.updateNavbar();
+
+      const projectsList = document.getElementById("projects-list");
+      const dashboardError = document.getElementById("dashboard-error");
+      const createModal = document.getElementById("create-modal");
+      const openCreateBtn = document.getElementById("create-project-btn");
+      const closeCreateBtn = document.getElementById("modal-close");
+      const createForm = document.getElementById("create-project-form");
+
+      // 2. Fetch projects list
+      async function loadProjects() {
+        try {
+          const response = await fetch(`${API_BASE}/projects`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include"
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to load projects: ${response.statusText}`);
+          }
+
+          const projects = await response.json();
+          renderProjects(projects);
+        } catch (err) {
+          console.error(err);
+          dashboardError.textContent = "Could not load workspaces. Please make sure the backend is active.";
+          dashboardError.classList.add("visible");
+          projectsList.innerHTML = "";
+        }
+      }
+
+      function renderProjects(projects) {
+        if (!projects || projects.length === 0) {
+          projectsList.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+              <h3 class="empty-state__title">No active workspaces</h3>
+              <p class="empty-state__desc">Create a workspace to start mapping your architectural diagram with your team.</p>
+              <button class="btn btn--ghost" id="empty-create-btn">+ Create Workspace</button>
+            </div>
+          `;
+
+          const emptyBtn = document.getElementById("empty-create-btn");
+          if (emptyBtn) {
+            emptyBtn.addEventListener("click", openModal);
+          }
+          return;
+        }
+
+        projectsList.innerHTML = projects.map(p => {
+          const name = p.name || "Untitled Workspace";
+          const desc = p.description || "No description provided.";
+          const date = new Date(p.created_at).toLocaleDateString();
+          const role = p.role || "owner";
+
+          return `
+            <article class="project-card" data-id="${p.id}">
+              <div>
+                <h3 class="project-card__title">${name}</h3>
+                <p class="project-card__desc">${desc}</p>
+              </div>
+              <div class="project-card__footer">
+                <span>Created ${date}</span>
+                <span class="project-card__role">${role}</span>
+              </div>
+            </article>
+          `;
+        }).join("");
+
+        // Add click events to cards
+        document.querySelectorAll(".project-card").forEach(card => {
+          card.addEventListener("click", () => {
+            const id = card.getAttribute("data-id");
+            window.location.href = `editor.html?id=${id}`;
+          });
+        });
+      }
+
+      // Modal triggers
+      function openModal() {
+        createModal.classList.add("active");
+        document.getElementById("project-name").focus();
+      }
+
+      function closeModal() {
+        createModal.classList.remove("active");
+        createForm.reset();
+      }
+
+      openCreateBtn.addEventListener("click", openModal);
+      closeCreateBtn.addEventListener("click", closeModal);
+
+      // Close on clicking outside card
+      createModal.addEventListener("click", (e) => {
+        if (e.target === createModal) closeModal();
+      });
+
+      // Submit Create Project Form
+      createForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = document.getElementById("project-name").value.trim();
+        const description = document.getElementById("project-desc").value.trim();
+
+        if (!name) {
+          alert("Workspace name is required.");
+          return;
+        }
+
+        const submitBtn = document.getElementById("create-submit");
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Creating...";
+
+        try {
+          const response = await fetch(`${API_BASE}/projects`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, description }),
+            credentials: "include"
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            closeModal();
+            // Redirect straight to new workspace canvas
+            window.location.href = `editor.html?id=${data.id}`;
+          } else {
+            alert(data.error || "Failed to create project");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Unable to reach backend to create project.");
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Create & Open";
+        }
+      });
+
+      // Run initial projects fetch
+      loadProjects();
+    });
+  </script>
+</body>
+</html>

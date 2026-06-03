@@ -12,7 +12,6 @@ pool.on("error", (err) => {
   console.error("Unexpected error on idle PostgreSQL client:", err);
 });
 
-// A convenient transaction helper used throughout the codebase
 pool.transaction = async (callback) => {
   const client = await pool.connect();
   try {
