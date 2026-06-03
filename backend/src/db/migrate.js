@@ -12,7 +12,7 @@ async function migrate() {
 
   const files = fs.readdirSync(schemasDir)
     .filter(file => file.endsWith(".sql"))
-    .sort(); // Sorts numerically/alphabetically (001_users.sql, 002_oauth_providers.sql, etc.)
+    .sort(); 
 
   console.log(`Found ${files.length} migration schema files to run.`);
 
